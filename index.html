@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sorting Visualizer</title>
+<style>
+:root{
+  --bg:#f3f5f9; --panel:#ffffff; --ink:#16213a; --muted:#5d6b88; --line:#d9dfec;
+  --bar:#3b5bdb; --cmp:#f59f00; --swap:#e03131; --done:#2f9e6b;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0f1526; --panel:#172038; --ink:#e8ecf8; --muted:#93a0c0; --line:#2a3555;
+        --bar:#7c93ff; --cmp:#ffc43d; --swap:#ff6b6b; --done:#4cc99a;}
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;line-height:1.5}
+main{max-width:960px;margin:0 auto;padding:24px 16px 40px}
+h1{font-size:1.6rem;margin:0 0 4px}
+.sub{color:var(--muted);margin:0 0 20px}
+.controls{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:end;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+label{display:flex;flex-direction:column;font-size:.85rem;color:var(--muted);gap:4px}
+select,button,input[type=range]{font:inherit}
+select{padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+button{padding:8px 16px;border-radius:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer}
+button.primary{background:var(--bar);border-color:var(--bar);color:#fff;font-weight:600}
+button:disabled,select:disabled,input:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--cmp);outline-offset:2px}
+#stage{height:340px;margin:16px 0;padding:12px;display:flex;align-items:flex-end;gap:2px;
+  background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.bar{flex:1;background:var(--bar);border-radius:3px 3px 0 0;min-width:2px}
+.bar.cmp{background:var(--cmp)}
+.bar.swap{background:var(--swap)}
+.bar.done{background:var(--done)}
+.stats{display:flex;flex-wrap:wrap;gap:8px 24px;margin-bottom:12px}
+.stat b{font-size:1.2rem}
+.stat span{color:var(--muted);font-size:.85rem;margin-left:4px}
+table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.9rem}
+th,td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600}
+tr.active td{background:color-mix(in srgb,var(--bar) 12%,transparent);font-weight:600}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin:12px 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.table-wrap{overflow-x:auto}
+@media (max-width:560px){#stage{height:260px}}
+</style>
+</head>
+<body>
+<main>
+  <h1>Sorting Visualizer</h1>
+  <p class="sub">Watch how Bubble, Selection, Insertion and Merge sort rearrange the same array.</p>
+
+  <div class="controls">
+    <label>Algorithm
+      <select id="algo">
+        <option value="bubble">Bubble sort</option>
+        <option value="selection">Selection sort</option>
+        <option value="insertion">Insertion sort</option>
+        <option value="merge">Merge sort</option>
+      </select>
+    </label>
+    <label>Array size: <span id="sizeVal">40</span>
+      <input type="range" id="size" min="5" max="100" value="40">
+    </label>
+    <label>Speed
+      <input type="range" id="speed" min="1" max="100" value="70">
+    </label>
+    <button id="shuffle">New array</button>
+    <button id="start" class="primary">Start</button>
+    <button id="stop" disabled>Stop</button>
+  </div>
+
+  <div id="stage" aria-label="Array bars"></div>
+
+  <div class="legend">
+    <span><i style="background:var(--bar)"></i>Unsorted</span>
+    <span><i style="background:var(--cmp)"></i>Comparing</span>
+    <span><i style="background:var(--swap)"></i>Swapping / writing</span>
+    <span><i style="background:var(--done)"></i>Sorted</span>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><b id="cmpCount">0</b><span>comparisons</span></div>
+    <div class="stat"><b id="swapCount">0</b><span>swaps / writes</span></div>
+    <div class="stat"><b id="timeCount">0.0s</b><span>elapsed</span></div>
+  </div>
+
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Algorithm</th><th>Best</th><th>Average</th><th>Worst</th><th>Space</th></tr></thead>
+    <tbody>
+      <tr data-a="bubble"><td>Bubble</td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td></tr>
+      <tr data-a="selection"><td>Selection</td><td>O(n²)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td></tr>
+      <tr data-a="insertion"><td>Insertion</td><td>O(n)</td><td>O(n²)</td><td>O(n²)</td><td>O(1)</td></tr>
+      <tr data-a="merge"><td>Merge</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n)</td></tr>
+    </tbody>
+  </table>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const stage = $('stage');
+let arr = [], bars = [], running = false, stopFlag = false;
+let cmpCount = 0, swapCount = 0, startTime = 0, timer = null, lastTouched = [];
+
+/* ---------- array + rendering ---------- */
+function makeArray() {
+  const n = +$('size').value;
+  arr = Array.from({ length: n }, () => Math.floor(Math.random() * 95) + 5);
+  stage.innerHTML = '';
+  bars = arr.map(v => {
+    const b = document.createElement('div');
+    b.className = 'bar';
+    b.style.height = v + '%';
+    stage.appendChild(b);
+    return b;
+  });
+  resetStats();
+}
+
+function resetStats() {
+  cmpCount = swapCount = 0;
+  $('cmpCount').textContent = 0;
+  $('swapCount').textContent = 0;
+  $('timeCount').textContent = '0.0s';
+}
+
+function clearTouched() {
+  lastTouched.forEach(i => bars[i] && bars[i].classList.remove('cmp', 'swap'));
+  lastTouched = [];
+}
+
+function mark(indices, cls) {
+  clearTouched();
+  indices.forEach(i => {
+    bars[i].style.height = arr[i] + '%';
+    bars[i].classList.add(cls);
+  });
+  lastTouched = indices;
+}
+
+/* ---------- algorithms (generators: each yield = one visual step) ---------- */
+function* bubble(a) {
+  const n = a.length;
+  for (let i = 0; i < n - 1; i++) {
+    let swapped = false;
+    for (let j = 0; j < n - 1 - i; j++) {
+      yield ['cmp', j, j + 1];
+      if (a[j] > a[j + 1]) {
+        [a[j], a[j + 1]] = [a[j + 1], a[j]];
+        swapped = true;
+        yield ['swap', j, j + 1];
+      }
+    }
+    yield ['done', n - 1 - i];
+    if (!swapped) break;
+  }
+}
+
+function* selection(a) {
+  const n = a.length;
+  for (let i = 0; i < n - 1; i++) {
+    let min = i;
+    for (let j = i + 1; j < n; j++) {
+      yield ['cmp', min, j];
+      if (a[j] < a[min]) min = j;
+    }
+    if (min !== i) {
+      [a[i], a[min]] = [a[min], a[i]];
+      yield ['swap', i, min];
+    }
+    yield ['done', i];
+  }
+}
+
+function* insertion(a) {
+  for (let i = 1; i < a.length; i++) {
+    let j = i;
+    while (j > 0) {
+      yield ['cmp', j - 1, j];
+      if (a[j - 1] <= a[j]) break;
+      [a[j - 1], a[j]] = [a[j], a[j - 1]];
+      yield ['swap', j - 1, j];
+      j--;
+    }
+  }
+}
+
+function* mergeSort(a, l = 0, r = a.length - 1) {
+  if (l >= r) return;
+  const m = (l + r) >> 1;
+  yield* mergeSort(a, l, m);
+  yield* mergeSort(a, m + 1, r);
+  const L = a.slice(l, m + 1), R = a.slice(m + 1, r + 1);
+  let i = 0, j = 0, k = l;
+  while (i < L.length && j < R.length) {
+    yield ['cmp', l + i, m + 1 + j];
+    a[k] = L[i] <= R[j] ? L[i++] : R[j++];
+    yield ['set', k++];
+  }
+  while (i < L.length) { a[k] = L[i++]; yield ['set', k++]; }
+  while (j < R.length) { a[k] = R[j++]; yield ['set', k++]; }
+}
+
+const ALGOS = { bubble, selection, insertion, merge: mergeSort };
+
+/* ---------- runner ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const delay = () => Math.pow(1 - $('speed').value / 100, 2) * 300 + 1;
+
+function setRunning(state) {
+  running = state;
+  ['algo', 'size', 'shuffle', 'start'].forEach(id => $(id).disabled = state);
+  $('stop').disabled = !state;
+}
+
+async function run() {
+  if (running) return;
+  bars.forEach(b => b.classList.remove('done', 'cmp', 'swap'));
+  resetStats();
+  stopFlag = false;
+  setRunning(true);
+  startTime = performance.now();
+  timer = setInterval(() => {
+    $('timeCount').textContent = ((performance.now() - startTime) / 1000).toFixed(1) + 's';
+  }, 100);
+
+  const gen = ALGOS[$('algo').value](arr);
+  for (const [type, a, b] of gen) {
+    if (stopFlag) break;
+    if (type === 'cmp') { cmpCount++; mark([a, b], 'cmp'); }
+    else if (type === 'swap') { swapCount++; mark([a, b], 'swap'); }
+    else if (type === 'set') { swapCount++; mark([a], 'swap'); }
+    else if (type === 'done') { bars[a].classList.add('done'); }
+    $('cmpCount').textContent = cmpCount;
+    $('swapCount').textContent = swapCount;
+    await sleep(delay());
+  }
+
+  clearInterval(timer);
+  clearTouched();
+  if (!stopFlag) {
+    for (let i = 0; i < arr.length; i++) {
+      bars[i].style.height = arr[i] + '%';
+      bars[i].classList.add('done');
+      if (i % 2 === 0) await sleep(8);
+    }
+  } else {
+    bars.forEach((b, i) => b.style.height = arr[i] + '%');
+  }
+  setRunning(false);
+}
+
+/* ---------- events ---------- */
+function highlightRow() {
+  document.querySelectorAll('tbody tr').forEach(tr =>
+    tr.classList.toggle('active', tr.dataset.a === $('algo').value));
+}
+$('size').addEventListener('input', () => { $('sizeVal').textContent = $('size').value; makeArray(); });
+$('shuffle').addEventListener('click', makeArray);
+$('start').addEventListener('click', run);
+$('stop').addEventListener('click', () => { stopFlag = true; });
+$('algo').addEventListener('change', highlightRow);
+
+highlightRow();
+makeArray();
+</script>
+</body>
+</html>
